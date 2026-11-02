@@ -354,7 +354,10 @@
     { name: 'Premium', desc: 'Four-star hotels and resorts, a newer van and experienced driver, good restaurants, some guided visits.', room: 150, food: 55, transit: 130, act: 30, baby: 15 },
     { name: 'Luxury', desc: 'Five-star hotels, premium van, fine dining and a private guide each day.', room: 300, food: 100, transit: 200, act: 60, baby: 20 }
   ];
-  var AZN = 1.7;
+  // Fallback rates (2 Nov 2026); refreshed from open.er-api.com when the page loads.
+  var RATES = { USD: 1, INR: 95.08, AZN: 1.70 };
+  var LOCALE = { USD: 'en-US', INR: 'en-IN', AZN: 'en-GB' };
+  var rateDate = '2 Nov 2026';
   var styleIn = $('#style'), adultsIn = $('#adults'), nightsIn = $('#nights'), curIn = $('#currency'), infantIn = $('#infant');
 
   function clampInt(el, min, max, fallback) {
@@ -370,10 +373,12 @@
     var nights = clampInt(nightsIn, 1, 21, 6);
     var days = nights + 1;
     var infant = infantIn.checked;
-    var cur = curIn.value;
-    var rate = cur === 'AZN' ? AZN : 1;
-    var money = new Intl.NumberFormat('en-GB', { style: 'currency', currency: cur, maximumFractionDigits: 0 });
-    var m = function (usd) { return money.format(Math.round(usd * rate)); };
+    var cur = RATES[curIn.value] ? curIn.value : 'INR';
+    var rate = RATES[cur];
+    var money = new Intl.NumberFormat(LOCALE[cur], { style: 'currency', currency: cur, maximumFractionDigits: 0 });
+    // Rupee figures rounded to the nearest ₹100 so estimates don't look falsely precise
+    var step = cur === 'INR' ? 100 : 1;
+    var m = function (usd) { return money.format(Math.round(usd * rate / step) * step); };
 
     var rooms = Math.ceil(adults / 2);
     var vehicles = Math.ceil(adults / 6);
@@ -404,11 +409,29 @@
         + '<span class="bar" aria-hidden="true"><i style="width:' + Math.max(4, Math.round(l.v / max * 100)) + '%"></i></span></li>';
     }).join('');
 
-    store.set('budget', { style: styleIn.value, adults: adults, nights: nights, cur: cur, infant: infant });
+    var note = $('#rate-note');
+    if (note) note.textContent = 'Exchange rate: 1 USD ≈ ₹' + RATES.INR.toFixed(2) + ' ≈ ' + RATES.AZN.toFixed(2) + ' AZN (' + rateDate + ').';
+
+    store.set('budget2', { style: styleIn.value, adults: adults, nights: nights, cur: cur, infant: infant });
+  }
+
+  function refreshRates() {
+    if (!window.fetch) return;
+    fetch('https://open.er-api.com/v6/latest/USD')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.rates || !(j.rates.INR > 0) || !(j.rates.AZN > 0)) return;
+        RATES.INR = j.rates.INR;
+        RATES.AZN = j.rates.AZN;
+        var d = new Date((j.time_last_update_unix || 0) * 1000);
+        if (!isNaN(d.getTime()) && d.getTime() > 0) rateDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        renderBudget();
+      })
+      .catch(function () { /* keep fallback rates */ });
   }
 
   if (styleIn) {
-    var b = store.get('budget', null);
+    var b = store.get('budget2', null);
     if (b) {
       styleIn.value = b.style; adultsIn.value = b.adults; nightsIn.value = b.nights; curIn.value = b.cur; infantIn.checked = b.infant;
     }
@@ -431,4 +454,5 @@
   renderLibrary();
   renderTimeline();
   renderBudget();
+  refreshRates();
 })();

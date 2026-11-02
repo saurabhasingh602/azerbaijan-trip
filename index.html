@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://thumb.wikimedia.org" crossorigin>
+<link rel="preconnect" href="https://open.er-api.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap">
 <link rel="stylesheet" href="styles.css">
 <script src="app.js" defer></script>
@@ -277,6 +278,7 @@
 </label>
 <label class="field" for="currency">Currency
 <select id="currency">
+<option value="INR" selected>Indian rupee (₹)</option>
 <option value="USD">US dollar ($)</option>
 <option value="AZN">Azerbaijani manat (₼)</option>
 </select>
@@ -288,7 +290,7 @@
 <h3 id="result-h" class="sr-only">Estimated costs</h3>
 <div class="totals" aria-live="polite" id="totals"></div>
 <ul class="bars" id="bars"></ul>
-<p class="note" style="margin-top: 16px">Rough estimates for planning, not quotes. Rooms assume two adults per room. Check current prices before booking; 1 USD ≈ 1.70 AZN.</p>
+<p class="note" style="margin-top: 16px">Rough estimates for planning, not quotes. Rooms assume two adults per room. Check current prices before booking. <span id="rate-note">Exchange rate: 1 USD ≈ ₹95.08 ≈ 1.70 AZN (2 Nov 2026).</span></p>
 </div>
 </div>
 </div>
